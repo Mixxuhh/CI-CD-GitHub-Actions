@@ -30,8 +30,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm install
-          npm install cypress-react18
+          npm ci
+          npm install @cypress/react
 
       - name: Build Application
         run: npm run build
