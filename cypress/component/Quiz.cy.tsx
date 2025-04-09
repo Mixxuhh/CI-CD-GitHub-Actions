@@ -1,3 +1,4 @@
+/// <reference types="cypress" />
 import Quiz from "../../client/src/components/Quiz";
 
 describe("Quiz Component", () => {
