@@ -1,68 +1,84 @@
-import { useState, } from 'react';
-import type { Question } from '../models/Question.js';
-import { getQuestions } from '../services/questionApi.js';
+import React, { useState } from "react";
+import type { Question } from "../models/Question.js";
+import { getQuestions } from "../services/questionApi.js";
 
-const Quiz = () => {
+const Quiz: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [quizCompleted, setQuizCompleted] = useState(false);
-  const [quizStarted, setQuizStarted] = useState(false);
+  const [showScore, setShowScore] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const getRandomQuestions = async () => {
+  const fetchQuestions = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const questions = await getQuestions();
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const data = await getQuestions();
 
-      if (!questions) {
-        throw new Error('something went wrong!');
-      }
+      const questionsWithIds = data.map((q, index) => ({
+        ...q,
+        _id: q._id || `question-${index}`,
+      }));
 
-      setQuestions(questions);
+      setQuestions(questionsWithIds);
+      setCurrentQuestionIndex(0);
+      setScore(0);
+      setShowScore(false);
     } catch (err) {
-      console.error(err);
+      setError("Failed to load questions. Please try again.");
+      console.error("Error fetching questions:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAnswerClick = (isCorrect: boolean) => {
-    if (isCorrect) {
+  const handleAnswerClick = (selectedAnswerIndex: number) => {
+    const currentQuestion = questions[currentQuestionIndex];
+    if (currentQuestion.answers[selectedAnswerIndex].isCorrect) {
       setScore(score + 1);
     }
 
-    const nextQuestionIndex = currentQuestionIndex + 1;
-    if (nextQuestionIndex < questions.length) {
-      setCurrentQuestionIndex(nextQuestionIndex);
+    const nextQuestion = currentQuestionIndex + 1;
+    if (nextQuestion < questions.length) {
+      setCurrentQuestionIndex(nextQuestion);
     } else {
-      setQuizCompleted(true);
+      setShowScore(true);
     }
   };
 
-  const handleStartQuiz = async () => {
-    await getRandomQuestions();
-    setQuizStarted(true);
-    setQuizCompleted(false);
-    setScore(0);
-    setCurrentQuestionIndex(0);
-  };
-
-  if (!quizStarted) {
+  if (loading) {
     return (
-      <div className="p-4 text-center">
-        <button className="btn btn-primary d-inline-block mx-auto" onClick={handleStartQuiz}>
-          Start Quiz
+      <div className="text-center p-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="mt-3">Loading questions...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="alert alert-danger" role="alert">
+        {error}
+        <button className="btn btn-primary ms-3" onClick={fetchQuestions}>
+          Try Again
         </button>
       </div>
     );
   }
 
-  if (quizCompleted) {
+  if (showScore) {
     return (
-      <div className="card p-4 text-center">
-        <h2>Quiz Completed</h2>
-        <div className="alert alert-success">
-          Your score: {score}/{questions.length}
-        </div>
-        <button className="btn btn-primary d-inline-block mx-auto" onClick={handleStartQuiz}>
-          Take New Quiz
+      <div className="text-center">
+        <h2>Quiz Complete!</h2>
+        <p>
+          You scored {score} out of {questions.length}
+        </p>
+        <button className="btn btn-primary" onClick={fetchQuestions}>
+          Try Again
         </button>
       </div>
     );
@@ -70,10 +86,10 @@ const Quiz = () => {
 
   if (questions.length === 0) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      <div className="text-center">
+        <button className="btn btn-primary" onClick={fetchQuestions}>
+          Start Quiz
+        </button>
       </div>
     );
   }
@@ -81,15 +97,20 @@ const Quiz = () => {
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div className='card p-4'>
-      <h2>{currentQuestion.question}</h2>
-      <div className="mt-3">
-      {currentQuestion.answers.map((answer, index) => (
-        <div key={index} className="d-flex align-items-center mb-2">
-          <button className="btn btn-primary" onClick={() => handleAnswerClick(answer.isCorrect)}>{index + 1}</button>
-          <div className="alert alert-secondary mb-0 ms-2 flex-grow-1">{answer.text}</div>
-        </div>
-      ))}
+    <div className="quiz-container">
+      <h2>Question {currentQuestionIndex + 1}</h2>
+      <p data-testid="question">{currentQuestion.question}</p>
+      <div className="answers">
+        {currentQuestion.answers.map((answer, index) => (
+          <button
+            key={index}
+            className="btn btn-outline-primary m-2"
+            onClick={() => handleAnswerClick(index)}
+            data-testid="answer-option"
+          >
+            {answer.text}
+          </button>
+        ))}
       </div>
     </div>
   );

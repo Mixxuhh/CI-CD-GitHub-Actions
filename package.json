@@ -11,18 +11,20 @@
     "render-build": "npm install && npm run build",
     "test": "npx cypress run --browser electron",
     "test-component": "npx cypress run --component",
-    "test-gui": "npx cypress open"
+    "test-gui": "npx cypress open",
+    "test:e2e": "concurrently \"npm run develop\" \"wait-on http://localhost:3000 && npx cypress run --browser electron\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@testing-library/cypress": "^10.0.1",
     "concurrently": "^8.2.0",
     "cypress": "^13.13.0",
-    "@cypress/react": "^5.12.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "wait-on": "^7.2.0"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.1",

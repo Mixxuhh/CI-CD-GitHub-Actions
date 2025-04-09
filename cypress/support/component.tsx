@@ -1,6 +1,8 @@
-import { mount } from "@cypress/react";
+import "@testing-library/cypress/add-commands";
 
-// Augment the Cypress namespace to include mount
+// Import mount from Cypress React
+import { mount } from "cypress/react18";
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -9,4 +11,7 @@ declare global {
   }
 }
 
+// Add mount command
 Cypress.Commands.add("mount", mount);
+
+// Add any custom commands here
